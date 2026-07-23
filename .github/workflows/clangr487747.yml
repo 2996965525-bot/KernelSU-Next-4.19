@@ -72,7 +72,7 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         wget -O boot-source.img ${{ env.SOURCE_BOOT_IMAGE }}
         if [ -f boot-source.img ]; then
-            echo "HAVE_SOURCE_BOOT_IMAGE=true" >> $GITHUB_ENV
+          echo "HAVE_SOURCE_BOOT_IMAGE=true" >> $GITHUB_ENV
         fi
 
     - name: Setup KernelSU-Next
@@ -126,20 +126,6 @@ jobs:
           patch -p0 < $GITHUB_WORKSPACE/kernel_workspace/android-kernel/utils/xt_qtaguid.patch
         fi
 
-    - name: Setup Kali-Nethunter
-      if: env.ENABLE_NETHUNTER == 'true'
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        git clone https://github.com/tomxi1997/kali-nethunter_patches.git
-        patch -p1 < kali-nethunter_patches/add-rtl88xxau-5.6.4.2-drivers.patch
-        patch -p1 < kali-nethunter_patches/add-wifi-injection-4.14.patch
-        patch -p1 < kali-nethunter_patches/fix-ath9k-naming-conflict.patch
-        git clone https://github.com/Biohazardousrom/Kali-defconfig-checker.git kali
-        cd kali
-        chmod +x *.sh
-        chmod +x check-kernel-config
-        ./check-kernel-config $GITHUB_WORKSPACE/kernel_workspace/android-kernel/arch/${{ env.ARCH }}/configs/${{ env.KERNEL_CONFIG }} -w
-
     - name: Setup ccache
       if: env.ENABLE_CCACHE == 'true'
       uses: hendrikmuhs/ccache-action@v1.2
@@ -152,9 +138,9 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/aarch64-linux-android-4.9/bin:$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/arm-linux-androideabi-4.9/bin:$PATH
-        make -j$(nproc --all) O=out ARCH=${{ env.ARCH }} CC=gcc CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- ${{ env.KERNEL_CONFIG }}
-        make -j$(nproc --all) O=out ARCH=${{ env.ARCH }} CC=gcc CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi-
+        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_clang/clang-r383902b-11.0.2/bin:$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/aarch64-linux-android-4.9/bin:$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/arm-linux-androideabi-4.9/bin:$PATH
+        make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- ${{ env.KERNEL_CONFIG }}
+        make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi-
 
     - name: Check a kernel output files
       run: |
