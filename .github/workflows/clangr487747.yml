@@ -138,7 +138,14 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_clang/clang-r383902b-11.0.2/bin:$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/aarch64-linux-android-4.9/bin:$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/google_gcc/arm-linux-androideabi-4.9/bin:$PATH
+        # 自动找到下载的clang版本
+        CLANG_BIN=$(find $GITHUB_WORKSPACE/kernel_workspace/clang-aosp -name "clang" -type f -path "*/bin/*" 2>/dev/null | head -1)
+        CLANG_DIR=$(dirname "$CLANG_BIN")
+        GCC_AARCH64=$(find $GITHUB_WORKSPACE/kernel_workspace/clang-aosp -name "aarch64-linux-android-gcc" -type f 2>/dev/null | head -1)
+        GCC_ARM=$(find $GITHUB_WORKSPACE/kernel_workspace/clang-aosp -name "arm-linux-androideabi-gcc" -type f 2>/dev/null | head -1)
+        export PATH=$(dirname "$CLANG_BIN"):$(dirname "$GCC_AARCH64"):$(dirname "$GCC_ARM"):$PATH
+        echo "Using clang: $(which clang)"
+        echo "Using gcc: $(which aarch64-linux-android-gcc 2>/dev/null || echo 'not found')"
         make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- ${{ env.KERNEL_CONFIG }}
         make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi-
 
